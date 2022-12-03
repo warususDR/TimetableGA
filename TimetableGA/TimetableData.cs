@@ -12,18 +12,21 @@ namespace TimetableGA
     {
         private const int BITSTR_LENGTH = 64;
 
+        private readonly List<string> _types = new List<string>() { "Lecture", "Practice" };
+        private readonly List<string> _days = new List<string>() { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
         private List<string> _times;
-        private readonly List<string> _days = new List<string>() { "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота" };
         private List<Teacher> _teachers;
         private List<Room> _rooms;
         private List<Module> _modules;
 
-        private Dictionary<string, string> _encodedTimes;
+        private Dictionary<string, string> _encodedTypes;
         private Dictionary<string, string> _encodedDays;
+        private Dictionary<string, string> _encodedTimes;
         private Dictionary<string, Teacher> _encodedTeachers;
         private Dictionary<string, Room> _encodedRooms;
         private Dictionary<string, Module> _encodedModules;
 
+        #region ForInsideUse
         private string BuildRandomTimetableEntry()
         {
             Random randomGenerator = new Random();
@@ -32,8 +35,12 @@ namespace TimetableGA
             List<string> roomsKeys = _encodedRooms.Keys.ToList();
             List<string> daysKeys = _encodedDays.Keys.ToList();
             List<string> timesKeys = _encodedTimes.Keys.ToList();
+            List<string> typesKeys = _encodedTypes.Keys.ToList();
             string bitString = moduleKeys[randomGenerator.Next(0, moduleKeys.Count)] + teachersKeys[randomGenerator.Next(0, teachersKeys.Count)]
-                + roomsKeys[randomGenerator.Next(0, roomsKeys.Count)] + daysKeys[randomGenerator.Next(0, daysKeys.Count)] + timesKeys[randomGenerator.Next(0, timesKeys.Count)];
+                + roomsKeys[randomGenerator.Next(0, roomsKeys.Count)]
+                + daysKeys[randomGenerator.Next(0, daysKeys.Count)]
+                + timesKeys[randomGenerator.Next(0, timesKeys.Count)]
+                + typesKeys[randomGenerator.Next(0, typesKeys.Count)];
             return bitString;
         }
 
@@ -46,6 +53,7 @@ namespace TimetableGA
             result.Add(_encodedRooms[separatedEntry[2]].RoomName);
             result.Add(_encodedDays[separatedEntry[3]]);
             result.Add(_encodedTimes[separatedEntry[4]]);
+            result.Add(_encodedTypes[separatedEntry[5]]);
             return result;
         }
 
@@ -55,12 +63,44 @@ namespace TimetableGA
             return res;
         }
 
-        public TimetableData(List<string> times, List<string> teachers, Dictionary<string, int> rooms, List<string> modules )
+        private Dictionary<string, string> EncodeTypes()
+        {
+            return Encoder<string>.EncodeList(_types);
+        }
+
+        private Dictionary<string, string> EncodeTimes()
+        {
+            return Encoder<string>.EncodeList(_times);
+        }
+
+        private Dictionary<string, string> EncodeDays()
+        {
+            return Encoder<string>.EncodeList(_days);
+        }
+
+        private Dictionary<string, Teacher> EncodeTeachers()
+        {
+            return Encoder<Teacher>.EncodeList(_teachers);
+        }
+
+        private Dictionary<string, Room> EncodeRooms()
+        {
+            return Encoder<Room>.EncodeList(_rooms);
+        }
+
+        private Dictionary<string, Module> EncodeModules()
+        {
+            return Encoder<Module>.EncodeList(_modules);
+        }
+
+        #endregion
+
+        public TimetableData(List<string> times, List<string> teachers, Dictionary<string, int> rooms, List<string> modules)
         {
             _times = times;
 
             _teachers = new List<Teacher>();
-            foreach(var name in teachers) _teachers.Add(new Teacher(name));
+            foreach (var name in teachers) _teachers.Add(new Teacher(name));
 
             _rooms = new List<Room>();
             foreach (var key in rooms.Keys) _rooms.Add(new Room(key, rooms[key]));
@@ -68,6 +108,7 @@ namespace TimetableGA
             _modules = new List<Module>();
             foreach (var name in modules) _modules.Add(new Module(name));
 
+            _encodedTypes = EncodeTypes();
             _encodedTimes = EncodeTimes();
             _encodedDays = EncodeDays();
             _encodedTeachers = EncodeTeachers();
@@ -75,31 +116,7 @@ namespace TimetableGA
             _encodedModules = EncodeModules();
         }
 
-        public Dictionary<string, string> EncodeTimes()
-        {
-            return Encoder<string>.EncodeList(_times);
-        }
-
-        public Dictionary<string, string> EncodeDays()
-        {
-            return Encoder<string>.EncodeList(_days);
-        }
-
-        public Dictionary<string, Teacher> EncodeTeachers()
-        {
-            return Encoder<Teacher>.EncodeList(_teachers);
-        }
-
-        public Dictionary<string, Room> EncodeRooms()
-        {
-            return Encoder<Room>.EncodeList(_rooms);
-        }
-
-        public Dictionary<string, Module> EncodeModules()
-        {
-            return Encoder<Module>.EncodeList(_modules);
-        }
-
+        #region ForOutsideUse
         public List<string> BuildRandomTimetable(int numberOfClasses)
         {
             List<string> res = new List<string>();
@@ -126,10 +143,11 @@ namespace TimetableGA
 
         public ConsoleTable BuildTable(List<List<string>> items)
         {
-            var table = new ConsoleTable("Subject", "Teacher", "Room", "Day", "Time");
+            var table = new ConsoleTable("Subject", "Teacher", "Room", "Day", "Time", "Type");
             foreach (var row in items) table.AddRow(row.ToArray());
             return table;
         }
+        #endregion
 
     }
 }
