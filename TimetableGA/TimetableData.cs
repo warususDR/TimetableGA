@@ -116,6 +116,15 @@ namespace TimetableGA
             _encodedModules = EncodeModules();
         }
 
+        public int FindClassesCapacity(string name)
+        {
+            foreach (var room in _rooms)
+            {
+                if (room.RoomName == name) return room.MaxNumberOfStudents;
+            }
+            return -1;
+        }
+
         #region ForOutsideUse
         public List<string> BuildRandomTimetable(int numberOfClasses)
         {
@@ -127,17 +136,20 @@ namespace TimetableGA
         public List<List<string>> DecodeTimetable (List<string> timetable)
         { 
             List<List<string>> res = new List<List<string>>();
-            foreach(var day in _days)
+            foreach (var day in _days)
             {
-                foreach (var entry in timetable)
+                foreach (var time in _times)
                 {
-                    List<string> decoded = DecodeTimetableEntry(entry);
-                    if (decoded.Contains(day))
+                    foreach (var entry in timetable)
                     {
-                        res.Add(decoded);
+                        List<string> decoded = DecodeTimetableEntry(entry);
+                        if (decoded.Contains(day))
+                        {
+                            if(decoded.Contains(time)) res.Add(decoded);
+                        }
                     }
                 }
-            }
+            }           
             return res;
         }
 

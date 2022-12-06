@@ -12,7 +12,7 @@ List<string> modules = new List<string> { "MOOP", "Artificial Intelligence", "Pr
 #endregion
 
 TimetableData data = new TimetableData(times, teachers, rooms, modules);
-GeneticAlgorithm gAlgorithm = new GeneticAlgorithm(data, 15);
+GeneticAlgorithm gAlgorithm = new GeneticAlgorithm(data, 20);
 List<List<string>> gaResult = gAlgorithm.RunAlgorithm();
 ConsoleTable table = data.BuildTable(gaResult);
 table.Write();

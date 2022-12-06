@@ -18,7 +18,56 @@ namespace TimetableGA
 
         private int Fitness(string chromosome)
         {
-            return 0;
+            //0 module 1 teacher 2 room 3 day 4 time 5 type
+
+            List<List<string>> currentTimetable = _timetableData.DecodeTimetable(SeparateChromosome(chromosome));
+            int numberOfLectures = 0;
+            int numberOfPractices = 0;
+            int numberOfConflicts = 0;
+
+            for(int i = 0; i < currentTimetable.Count; i++ )
+            {
+                List<string> entry1 = currentTimetable[i];
+
+                if (entry1[5] == "Lecture")
+                {
+                    numberOfLectures++;
+                    // лекції тільки в аудиторії де більше 25 місць
+                    if (_timetableData.FindClassesCapacity(entry1[2]) < 25) numberOfConflicts++;
+                }
+
+                if (entry1[5] == "Practice")
+                {
+                    numberOfPractices++;
+                    // практики в аудиторії де менше 25 місць
+                    if (_timetableData.FindClassesCapacity(entry1[2]) > 25) numberOfConflicts++;
+                }
+
+                for (int j = 0; j < currentTimetable.Count; j++)
+                {
+                    List<string> entry2 = currentTimetable[j];
+                    if(entry1 != entry2)
+                    {
+                        //однаковий вчитель
+                        if (entry1[1] == entry2[1])
+                        {
+                            // однаковий час в однаковий день
+                            if (entry1[4] == entry2[4] && entry1[3] == entry2[3]) numberOfConflicts++;
+
+                        }
+                        //різні вчителі
+                        else
+                        {
+                            // одна і та сама лекція
+                            if (entry1[5] == "Lecture" && entry2[5] == "Lecture" && entry1[0] == entry2[0]) numberOfConflicts++;
+                        }
+                    }
+                }
+            }
+            //надто багато практик/лекцій
+            if (numberOfPractices > 14 || numberOfLectures > 14) numberOfConflicts++;
+            return numberOfConflicts;
+
         }
 
         private List<String> SeparateChromosome(string chromosome)
@@ -68,16 +117,6 @@ namespace TimetableGA
             return MutatedChromosome;
         }
 
-        private List<string> GeneratePopulation(int populationSize)
-        {
-            List<string> res = new List<string>();
-            for (int i = 0; i < populationSize; i++)
-            {
-                res.Add(GenerateChromosome());
-            }
-            return res;
-        }
-
         private string GenerateChromosome()
         {
             List<string> chromosome = _timetableData.BuildRandomTimetable(NumberOfClasses);
@@ -93,7 +132,12 @@ namespace TimetableGA
 
         public List<List<string>> RunAlgorithm(double crossoverProb = 0.8, double mutationProb = 1 / CHROMOSOME_SIZE, double iterations = 100, int populationSize = 500)
         {
-            List<string> currentPopulation = GeneratePopulation(populationSize);
+            List<string> currentPopulation = new List<string>();
+            for (int i = 0; i < populationSize; i++)
+            {
+                currentPopulation.Add(GenerateChromosome());
+            }
+
             string bestChromosome = currentPopulation[0];
 
             // генеруємо популяції задану кількість ітерацій
@@ -112,8 +156,15 @@ namespace TimetableGA
                     {
                         bestScore = fitnesses[i];
                         bestChromosome = currentPopulation[i];
+                        if (bestScore == 0) return _timetableData.DecodeTimetable(SeparateChromosome(bestChromosome));
                     }
                 }
+
+                // дебажне виведення
+                List<List<string>> decodedCurrBestTimetable = _timetableData.DecodeTimetable(SeparateChromosome(bestChromosome));
+                _timetableData.BuildTable(decodedCurrBestTimetable).Write();
+                Console.WriteLine($"Iteration: {iteration} Score: {bestScore}");
+                Console.WriteLine();
 
                 //селекція
                 List<string> selectedChromosomes = new List<string>();
